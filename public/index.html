@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Taking App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        .note {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Note Taking App</h1>
+
+<!-- Create Note Form -->
+<form id="createNoteForm">
+    <label for="title">Title:</label>
+    <input type="text" id="title" name="title" required>
+    <br><br>
+    <label for="content">Content:</label> <br>
+    <textarea id="content" name="content" required></textarea>
+    <br><br>
+    <button type="submit">Create Note</button>
+</form>
+
+<!-- Show All Notes Button -->
+<button id="showAllNotes">Show All Notes</button>
+
+<!-- Display Notes -->
+<div id="notesContainer"></div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const createNoteForm = document.getElementById('createNoteForm');
+        const showAllNotesButton = document.getElementById('showAllNotes');
+        const notesContainer = document.getElementById('notesContainer');
+
+        createNoteForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+
+            fetch('/api/notes', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title, content }),
+            })
+            .then(response => response.json())
+            .then(note => {
+                // Display the created note
+                displayNote(note);
+
+                // Clear the form
+                createNoteForm.reset();
+            })
+            .catch(error => console.error('Error creating note:', error));
+        });
+
+        // Show All Notes Button Click Event
+        showAllNotesButton.addEventListener('click', function () {
+            fetch('/api/notes')
+            .then(response => response.json())
+            .then(notes => {
+                // Clear existing notes
+                notesContainer.innerHTML = '';
+
+                // Display all notes
+                notes.forEach(note => displayNote(note));
+            })
+            .catch(error => console.error('Error fetching notes:', error));
+        });
+
+        function displayNote(note) {
+            const noteElement = document.createElement('div');
+            noteElement.classList.add('note');
+            noteElement.innerHTML = `
+                <p><strong>Title:</strong> ${note.title}</p>
+                <p><strong>Content:</strong> ${note.content}</p>
+                <p><strong>Created At:</strong> ${new Date(note.createdAt).toLocaleString()}</p>
+                <p><strong>Updated At:</strong> ${new Date(note.updatedAt).toLocaleString()}</p>
+                <button onclick="updateNote('${note._id}')">Update Note</button>
+                <button onclick="deleteNote('${note._id}')">Delete Note</button>
+            `;
+            notesContainer.appendChild(noteElement);
+        }
+
+        // Function to update a note
+        window.updateNote = function (noteId) {
+            const updatedTitle = prompt('Enter updated title:');
+            const updatedContent = prompt('Enter updated content:');
+
+            fetch(`/api/notes/${noteId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ title: updatedTitle, content: updatedContent }),
+            })
+            .then(response => response.json())
+            .then(updatedNote => {
+                // Update the displayed note
+                const noteElement = document.querySelector(`.note[data-note-id="${noteId}"]`);
+                noteElement.innerHTML = `
+                    <p><strong>Title:</strong> ${updatedNote.title}</p>
+                    <p><strong>Content:</strong> ${updatedNote.content}</p>
+                    <p><strong>Created At:</strong> ${new Date(updatedNote.createdAt).toLocaleString()}</p>
+                    <p><strong>Updated At:</strong> ${new Date(updatedNote.updatedAt).toLocaleString()}</p>
+                    <button onclick="updateNote('${noteId}')">Update Note</button>
+                    <button onclick="deleteNote('${noteId}')">Delete Note</button>
+                `;
+            })
+            .catch(error => console.error('Error updating note:', error));
+        };
+
+        // Function to delete a note
+        window.deleteNote = function (noteId) {
+            if (confirm('Are you sure you want to delete this note?')) {
+                fetch(`/api/notes/${noteId}`, {
+                    method: 'DELETE',
+                })
+                .then(response => {
+                    // Remove the deleted note from the display
+                    const noteElement = document.querySelector(`.note[data-note-id="${noteId}"]`);
+                    noteElement.remove();
+                })
+                .catch(error => console.error('Error deleting note:', error));
+            }
+        };
+    });
+</script>
+
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
